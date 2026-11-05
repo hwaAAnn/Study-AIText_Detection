@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# 데이터와 실험 결과 (용량이 크고 재생성 가능)
+data/
+outputs/
+*.ckpt
+*.safetensors
+
+# 기타
+.env
+.DS_Store
