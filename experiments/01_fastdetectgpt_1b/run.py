@@ -37,8 +37,14 @@ PAPER_FILES = {
 @torch.no_grad()
 def criteria_for_text(model, tokenizer, text, device, save_tokens=False):
     tok = tokenizer(text, return_tensors="pt", return_token_type_ids=False).to(device)
-    labels = tok.input_ids[:, 1:]
-    logits = model(**tok).logits[:, :-1].float()  # fp32 for softmax stability
+    return scores_from_logits(model(**tok).logits, tok.input_ids, save_tokens)
+
+
+@torch.no_grad()
+def scores_from_logits(logits, input_ids, save_tokens=False):
+    """logits: [1, T, V] (any dtype) for input_ids [1, T]; scores predict tokens 1..T-1."""
+    labels = input_ids[:, 1:]
+    logits = logits[:, :-1].float()  # fp32 for softmax stability
 
     lprobs = F.log_softmax(logits, dim=-1)
     probs = lprobs.exp()
@@ -108,10 +114,13 @@ def main():
     ap.add_argument("--load_4bit", action="store_true", help="bitsandbytes NF4 weights (fp16 compute); tag gets -nf4")
     ap.add_argument("--split_4bit", action="store_true",
                     help="NF4 decoder on GPU + CPU embedding + fp16 lm_head on GPU (for 8B on 6 GB); tag gets -nf4split")
+    ap.add_argument("--layerwise", action="store_true",
+                    help="exact fp16, one decoder layer on the GPU at a time (for 8B on 6 GB); tag gets -layerwise")
     args = ap.parse_args()
 
     torch.manual_seed(0)
-    tag = args.model.split("/")[-1] + ("-nf4" if args.load_4bit else "") + ("-nf4split" if args.split_4bit else "")
+    tag = (args.model.split("/")[-1] + ("-nf4" if args.load_4bit else "") + ("-nf4split" if args.split_4bit else "")
+           + ("-layerwise" if args.layerwise else ""))
     out_dir = ROOT / "outputs" / "01_fastdetectgpt_1b" / tag
     if args.save_tokens:
         out_dir = out_dir / "tokens"
@@ -128,13 +137,17 @@ def main():
     if args.max_gpu_mem:
         kw.update(device_map="auto", max_memory={0: args.max_gpu_mem, "cpu": "12GiB"})
     t0 = time.time()
-    if args.split_4bit:
+    if args.layerwise:
+        from layerwise import LayerwiseLM
+        model = LayerwiseLM(args.model, dtype=getattr(torch, args.dtype))
+    elif args.split_4bit:
         model = SplitLM(args.model)
     else:
         model = AutoModelForCausalLM.from_pretrained(args.model, **kw)
-    if not args.max_gpu_mem and not args.load_4bit and not args.split_4bit:
+    if not args.max_gpu_mem and not args.load_4bit and not args.split_4bit and not args.layerwise:
         model.to("cuda")
-    model.eval()
+    if not args.layerwise:
+        model.eval()
     device = "cuda"
     print(f"loaded {args.model} ({args.dtype}) in {time.time() - t0:.1f}s, "
           f"GPU mem {torch.cuda.memory_allocated() / 2**30:.2f} GiB")
@@ -145,7 +158,16 @@ def main():
         raw = json.load(open(DATA / "raw" / f"{name}.raw_data.json", encoding="utf-8"))
         n = len(raw["original"]) if args.limit is None else min(args.limit, len(raw["original"]))
         rows = []
-        for i in tqdm(range(n), desc=name, leave=False):
+        if args.layerwise:  # layer-major over all 2n texts of the dataset
+            texts = raw["original"][:n] + raw["sampled"][:n]
+            ids = [tokenizer(t, return_tensors="pt", return_token_type_ids=False).input_ids[0] for t in texts]
+            bar = tqdm(total=len(model.model.model.layers), desc=f"{name} layers", leave=False)
+            sc = [None] * len(texts)
+            for j, lg in model.logits(ids, progress=lambda k, K: bar.update(1)):
+                sc[j] = scores_from_logits(lg.unsqueeze(0), ids[j].unsqueeze(0).to(lg.device), args.save_tokens)
+            bar.close()
+            rows = [{"idx": i, "original": sc[i], "sampled": sc[n + i]} for i in range(n)]
+        for i in ([] if args.layerwise else tqdm(range(n), desc=name, leave=False)):
             rows.append({"idx": i,
                          "original": criteria_for_text(model, tokenizer, raw["original"][i], device, args.save_tokens),
                          "sampled": criteria_for_text(model, tokenizer, raw["sampled"][i], device, args.save_tokens)})

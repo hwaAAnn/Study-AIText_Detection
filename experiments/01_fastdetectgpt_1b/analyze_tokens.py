@@ -18,7 +18,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "outputs" / "01_fastdetectgpt_1b"
 MODELS = ["gpt-neo-1.3B", "gpt-neo-2.7B", "OLMo-2-0425-1B", "SmolLM2-1.7B", "gemma-3-1b-pt", "Llama-3.2-1B",
-          "Llama-3.2-3B", "Llama-3.2-1B-nf4split", "Llama-3.1-8B-nf4split"]
+          "Llama-3.2-3B", "Llama-3.2-1B-nf4split", "Llama-3.1-8B-layerwise"]
 DATASETS = ["xsum_davinci", "xsum_gpt-4"]
 
 

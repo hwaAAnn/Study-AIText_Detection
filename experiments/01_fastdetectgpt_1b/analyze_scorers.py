@@ -24,7 +24,7 @@ MODELS = [
     ("Llama-3.2-1B", "2023-24", "yes (Llama-3.1 logits)"),
     ("Llama-3.2-3B", "2023-24", "yes (Llama-3.1 logits)"),
     ("Llama-3.2-1B-nf4split", "2023-24", "yes; 4-bit decoder (quantization control)"),
-    ("Llama-3.1-8B-nf4split", "2023-24", "no (teacher of 3.2); 4-bit decoder"),
+    ("Llama-3.1-8B-layerwise", "2023-24", "no (teacher of 3.2); exact fp16, layer-wise"),
 ]
 
 
