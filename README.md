@@ -11,7 +11,7 @@
 
 | 실험 | 상태 | 요약 |
 |---|---|---|
-| [01 Fast-DetectGPT 재현](experiments/01_fastdetectgpt_1b/README.md) | 진행 중 | GPT-Neo-2.7B로는 논문 수치가 재현된다. 증류로 만든 최신 채점 모델(Llama-3.2, Gemma-3)에서는 GPT-3.5/4 글의 entropy가 likelihood 상승을 상쇄해서, Fast-DetectGPT가 단순 Likelihood보다 낮아진다 |
+| [01 Fast-DetectGPT 재현](experiments/01_fastdetectgpt_1b/README.md) | 진행 중 | GPT-Neo-2.7B로는 논문 수치가 재현된다. 학습 중 LLM 산출물에 노출된 최신 채점 모델(Llama-3.2, Gemma-3, SmolLM2)에서는 GPT-3.5/4 글의 entropy가 likelihood 상승을 상쇄해서, Fast-DetectGPT가 단순 Likelihood보다 낮아진다 |
 
 논의와 결정 기록: [docs/research-log.md](docs/research-log.md)
 
