@@ -7,6 +7,14 @@
 
 두 설정은 "텍스트가 짧아서 신호가 약하다"는 문제를 공유한다. 기존 detector들은 주로 긴 텍스트에서 성능을 보고하고, 짧은 텍스트에서는 약해진다고 알려져 있다. 이걸 먼저 직접 확인한다.
 
+## 진행 상황
+
+| 실험 | 상태 | 요약 |
+|---|---|---|
+| [01 Fast-DetectGPT 재현](experiments/01_fastdetectgpt_1b/README.md) | 진행 중 | GPT-Neo-2.7B로는 논문 수치가 재현된다. 증류로 만든 최신 채점 모델(Llama-3.2, Gemma-3)에서는 GPT-3.5/4 글의 entropy가 likelihood 상승을 상쇄해서, Fast-DetectGPT가 단순 Likelihood보다 낮아진다 |
+
+논의와 결정 기록: [docs/research-log.md](docs/research-log.md)
+
 ## 진행 원칙
 
 주제나 method를 먼저 정하지 않는다. 순서는 아래와 같다.
@@ -32,6 +40,7 @@
 | [Fast-DetectGPT: Efficient Zero-Shot Detection of Machine-Generated Text via Conditional Probability Curvature](https://arxiv.org/abs/2310.05130) | ICLR 2024 | [baoguangsheng/fast-detect-gpt](https://github.com/baoguangsheng/fast-detect-gpt) | DetectGPT의 섭동 단계를 샘플링으로 바꿔 빨라진 zero-shot 방법. 학습 없이 바로 돌려볼 수 있음 |
 | [Spotting LLMs With Binoculars: Zero-Shot Detection of Machine-Generated Text](https://arxiv.org/abs/2401.12070) | ICML 2024 | [ahans30/Binoculars](https://github.com/ahans30/Binoculars) | 두 언어모델의 perplexity를 비교하는 zero-shot 방법. Fast-DetectGPT와 나란히 비교하기 좋음. 기본 설정은 7B 모델 2개라 작은 모델 쌍으로 대체할 수 있는지 확인 필요 |
 | [DetectGPT: Zero-Shot Machine-Generated Text Detection using Probability Curvature](https://arxiv.org/abs/2301.11305) | ICML 2023 | [eric-mitchell/detect-gpt](https://github.com/eric-mitchell/detect-gpt) | 확률 곡률 기반 탐지의 출발점. 느려서 참고용 |
+| [When Less is More: Understanding When Token Filtering Helps and Fails in AI-generated Text Detection](https://aclanthology.org/2026.emnlp-main.500/) | EMNLP 2026 | 없음 | 정규화를 뺀 Fast-DetectGPT 점수(EGS)를 entropy calibration 관점에서 분석. 실험 01과 가장 가까운 선행연구 |
 
 ### 벤치마크
 
@@ -54,7 +63,8 @@
 
 ## 단계
 
-- [ ] Fast-DetectGPT와 Binoculars를 RAID 일부 데이터로 재현 (작은 모델로 대체 가능한지 포함)
+- [x] Fast-DetectGPT를 업스트림 데이터(exp_gpt3to4)로 재현. 1B급 모델로는 재현되지 않고, 원인을 분석 중 ([실험 01](experiments/01_fastdetectgpt_1b/README.md))
+- [ ] Binoculars 재현, RAID 일부 데이터로 확장
 - [ ] 같은 샘플을 길이별로 잘라 성능 곡선 그리기 (문단 → 3문장 → 1문장)
 - [ ] 1문장 설정에서 틀린 샘플 100개를 읽고 메모
 - [ ] ASURRE로 설문 설정 재현: 응답 1개만 볼 때와 한 사람의 응답 묶음을 볼 때 비교
