@@ -12,6 +12,7 @@
 | 실험 | 상태 | 요약 |
 |---|---|---|
 | [01 Fast-DetectGPT 재현](experiments/01_fastdetectgpt_1b/README.md) | 진행 중 | GPT-Neo-2.7B로는 논문 수치가 재현된다. 2023년 이후 데이터로 학습한 최신 채점 모델(Llama-3.1-8B, Llama-3.2, Gemma-3, SmolLM2)에서는 증류 여부와 크기에 상관없이 GPT-3.5/4 글의 entropy가 likelihood 상승을 상쇄해서, Fast-DetectGPT가 단순 Likelihood보다 낮아진다 |
+| [02 데이터 시기만 다른 채점 모델 (TiC-LM)](experiments/02_tic_lm_data_era/README.md) | 1B 완료 | 구조·학습법이 같고 Common Crawl 컷오프만 다른 1B 모델 7개. 2013~2023-01 컷오프는 모두 버티고(keep 67~69%), 2024-07 컷오프만 무너진다(keep 38%, 6세트 모두 FDG < Likelihood). 변화는 채팅 모델 글에서만 생긴다 |
 
 논의와 결정 기록: [docs/research-log.md](docs/research-log.md)
 
@@ -63,7 +64,9 @@
 
 ## 단계
 
-- [x] Fast-DetectGPT를 업스트림 데이터(exp_gpt3to4)로 재현. 1B급 모델로는 재현되지 않고, 원인을 분석 중 ([실험 01](experiments/01_fastdetectgpt_1b/README.md))
+- [x] Fast-DetectGPT를 업스트림 데이터(exp_gpt3to4)로 재현. 1B급 최신 모델로는 재현되지 않고, 원인을 분석 중 ([실험 01](experiments/01_fastdetectgpt_1b/README.md))
+- [x] 데이터 시기만 다른 채점 모델로 원인 확인: 2024-07 컷오프에서만 무너진다 ([실험 02](experiments/02_tic_lm_data_era/README.md))
+- [ ] 원인 좁히기: 2024-07 이후 채팅 모델 글, 사람 글의 시기 대조, 3B 반복, AI 글 주입 추가 학습
 - [ ] Binoculars 재현, RAID 일부 데이터로 확장
 - [ ] 같은 샘플을 길이별로 잘라 성능 곡선 그리기 (문단 → 3문장 → 1문장)
 - [ ] 1문장 설정에서 틀린 샘플 100개를 읽고 메모
